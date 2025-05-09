@@ -94,24 +94,24 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 
 ## 4. Expert Interview Experience
 
-- [ ] **Interview Session UI**
+- [x] **Interview Session UI**
 
-  - [ ] Create `/src/app/interview/[linkId]/page.tsx` for the interview experience
-  - [ ] Implement session initialization logic (checking link validity, creating session)
-  - [ ] Design the overall layout with question display area and chat interface
+  - [x] Create `/src/app/interview/[linkId]/page.tsx` for the interview experience
+  - [x] Implement session initialization logic (checking link validity, creating session)
+  - [x] Design the overall layout with question display area and chat interface
 
-- [ ] **Question & Answer Display**
+- [x] **Question & Answer Display**
 
-  - [ ] Create a component in `/src/app/_components/interview/QuestionDisplay.tsx` to show current question and answers side-by-side
-  - [ ] Implement A/B selection buttons with visual feedback for selection
-  - [ ] Add progress indicator showing current position in interview
+  - [x] Create a component in `/src/app/_components/interview/QuestionDisplay.tsx` to show current question and answers side-by-side
+  - [x] Implement A/B selection buttons with visual feedback for selection
+  - [x] Add progress indicator showing current position in interview
 
-- [ ] **Chat Interface for AI Interviewer**
+- [x] **Chat Interface for AI Interviewer**
 
-  - [ ] Create a chat UI component in `/src/app/_components/interview/ChatInterface.tsx`
-  - [ ] Implement message bubbles to display the conversation flow
-  - [ ] Add text input and recording button for the expert's responses
-  - [ ] Style with shadcn-ui components (Chat, Button, Input)
+  - [x] Create a chat UI component in `/src/app/_components/interview/ChatInterface.tsx`
+  - [x] Implement message bubbles to display the conversation flow
+  - [x] Add text input and recording button for the expert's responses
+  - [x] Style with shadcn-ui components (Chat, Button, Input)
 
 - [ ] **Voice Recording & Text Conversion**
 
@@ -121,16 +121,16 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 
 - [ ] **Backend for Interview Flow**
 
-  - [ ] Create tRPC router in `/src/server/api/routers/interview.ts`
+  - [x] Create tRPC router in `/src/server/api/routers/interview.ts`
   - [ ] Implement `startSession` procedure
-  - [ ] Implement `submitAnswer` procedure
-  - [ ] Implement `sendMessage` procedure for conversation
+  - [x] Implement `submitAnswer` procedure
+  - [x] Implement `sendMessage` procedure for conversation
 
 - [ ] **AI Interviewer Logic**
   - [ ] Set up prompt templates for the AI interviewer
   - [ ] Implement API calls to OpenAI (or other LLM provider)
   - [ ] Create logic to determine when to move to the next question
-  - [ ] Implement transcript storage for each step
+  - [x] Implement transcript storage for each step
 
 ## 5. Automated Analysis & Artifact Generation
 

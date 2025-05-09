@@ -2,14 +2,18 @@ import { notFound } from "next/navigation";
 import { db } from "~/server/db";
 import { InterviewSession } from "~/app/_components/interview/InterviewSession";
 
-export default async function InterviewPage({
-  params,
-}: {
-  params: { linkId: string };
-}) {
+interface InterviewPageProps {
+  params: {
+    linkId: string;
+  };
+}
+
+export default async function InterviewPage({ params }: InterviewPageProps) {
+  const linkId = params.linkId;
+
   // Validate link and initialize session
   const interviewLink = await db.interviewLink.findUnique({
-    where: { id: params.linkId },
+    where: { id: linkId },
     include: { project: true },
   });
 

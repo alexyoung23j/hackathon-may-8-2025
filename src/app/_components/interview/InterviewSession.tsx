@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import QuestionDisplay from "./QuestionDisplay";
-import ChatInterface from "./ChatInterface";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
 import { useRouter } from "next/navigation";
+import { ChevronRight, MessageSquare } from "lucide-react";
+import VoiceChatInterface from "./VoiceChatInterface";
 
 type InterviewSessionProps = {
   session: {
@@ -31,6 +32,7 @@ export function InterviewSession({
   const [transcript, setTranscript] = useState<string[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
 
   const router = useRouter();
 
@@ -70,6 +72,7 @@ export function InterviewSession({
         setCurrentQuestionIndex((prev) => prev + 1);
         setSelectedAnswer(null);
         setTranscript([]);
+        setShowMessages(false);
       } else {
         setIsCompleted(true);
       }
@@ -118,39 +121,94 @@ export function InterviewSession({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-      {/* Left side: Question display */}
-      <div className="rounded-lg bg-white p-6 shadow-lg">
-        <QuestionDisplay
-          question={currentQuestion.questionText}
-          answerA={currentQuestion.answerA}
-          answerB={currentQuestion.answerB}
-          selectedAnswer={selectedAnswer}
-          onSelectAnswer={setSelectedAnswer}
-          currentStep={currentQuestionIndex + 1}
-          totalSteps={questions.length}
-        />
-
-        <div className="mt-6 flex justify-end">
-          <Button
-            onClick={handleSubmitQuestion}
-            disabled={!selectedAnswer || isSubmitting}
-          >
-            {isSubmitting ? "Submitting..." : "Submit & Continue"}
-          </Button>
+    <div className="mx-auto flex h-[calc(100vh-10rem)] w-full max-w-7xl flex-col pb-8">
+      {/* Progress indicator */}
+      <div className="mb-6 flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-500">
+          Question {currentQuestionIndex + 1} of {questions.length}
+        </span>
+        <div className="h-2 w-full max-w-md rounded-full bg-gray-200">
+          <div
+            className="h-2 rounded-full bg-blue-500"
+            style={{
+              width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
+            }}
+          />
         </div>
+
+        <Button
+          onClick={handleSubmitQuestion}
+          disabled={!selectedAnswer || isSubmitting}
+          className="ml-4"
+        >
+          {isSubmitting ? (
+            "Submitting..."
+          ) : (
+            <>
+              Next Question <ChevronRight className="ml-1 h-4 w-4" />
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Right side: Chat interface */}
-      <div className="rounded-lg bg-white p-6 shadow-lg">
-        <ChatInterface
-          question={currentQuestion.questionText}
-          answerA={currentQuestion.answerA}
-          answerB={currentQuestion.answerB}
-          selectedAnswer={selectedAnswer}
-          addToTranscript={addToTranscript}
-          transcript={transcript}
-        />
+      {/* Two-column layout that fills available height */}
+      <div className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left side: Question display */}
+        <div className="flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md">
+          <h3 className="mb-2 text-lg font-medium">Compare Answers</h3>
+
+          {/* Question text inside the box */}
+          <div className="mb-4 rounded-lg bg-gray-50 p-4">
+            <h4 className="mb-2 font-medium">Question:</h4>
+            <p className="whitespace-pre-wrap text-gray-800">
+              {currentQuestion.questionText}
+            </p>
+          </div>
+
+          <div className="flex-1">
+            <QuestionDisplay
+              question={currentQuestion.questionText}
+              answerA={currentQuestion.answerA}
+              answerB={currentQuestion.answerB}
+              selectedAnswer={selectedAnswer}
+              onSelectAnswer={setSelectedAnswer}
+              currentStep={currentQuestionIndex + 1}
+              totalSteps={questions.length}
+              showProgress={false}
+            />
+          </div>
+        </div>
+
+        {/* Right side: Voice Chat Interface */}
+        <div className="flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-medium">Discuss Your Selection</h3>
+            {transcript.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto text-xs"
+                onClick={() => setShowMessages(true)}
+              >
+                <MessageSquare className="mr-1 h-4 w-4" />
+                View all messages
+              </Button>
+            )}
+          </div>
+          <div className="flex-1">
+            <VoiceChatInterface
+              question={currentQuestion.questionText}
+              answerA={currentQuestion.answerA}
+              answerB={currentQuestion.answerB}
+              selectedAnswer={selectedAnswer}
+              addToTranscript={addToTranscript}
+              transcript={transcript}
+              showTypeButton={false}
+              showMessages={showMessages}
+              setShowMessages={setShowMessages}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

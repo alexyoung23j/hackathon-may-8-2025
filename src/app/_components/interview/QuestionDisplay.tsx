@@ -13,6 +13,7 @@ type QuestionDisplayProps = {
   onSelectAnswer: (answer: "A" | "B") => void;
   currentStep: number;
   totalSteps: number;
+  showProgress?: boolean;
 };
 
 export default function QuestionDisplay({
@@ -23,27 +24,32 @@ export default function QuestionDisplay({
   onSelectAnswer,
   currentStep,
   totalSteps,
+  showProgress = true,
 }: QuestionDisplayProps) {
   return (
     <div className="flex flex-col space-y-6">
-      {/* Progress indicator */}
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-500">
-          Question {currentStep} of {totalSteps}
-        </span>
-        <div className="h-2 w-full max-w-xs rounded-full bg-gray-200">
-          <div
-            className="h-2 rounded-full bg-blue-500"
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          />
+      {/* Progress indicator - only shown if showProgress is true */}
+      {showProgress && (
+        <div className="mb-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-500">
+            Question {currentStep} of {totalSteps}
+          </span>
+          <div className="h-2 w-full max-w-xs rounded-full bg-gray-200">
+            <div
+              className="h-2 rounded-full bg-blue-500"
+              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Question text */}
-      <div className="rounded-lg bg-gray-50 p-4">
-        <h2 className="text-lg font-semibold">Question:</h2>
-        <p className="mt-2 whitespace-pre-wrap text-gray-800">{question}</p>
-      </div>
+      {/* Question text - only shown if showProgress is true (we're showing it elsewhere in the unified view) */}
+      {showProgress && (
+        <div className="rounded-lg bg-gray-50 p-4">
+          <h2 className="text-lg font-semibold">Question:</h2>
+          <p className="mt-2 whitespace-pre-wrap text-gray-800">{question}</p>
+        </div>
+      )}
 
       {/* Answer options */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -61,7 +67,7 @@ export default function QuestionDisplay({
               <CheckCircle className="h-5 w-5 text-blue-500" />
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-h-80 overflow-y-auto">
             <p className="text-sm whitespace-pre-wrap text-gray-600">
               {answerA}
             </p>
@@ -82,7 +88,7 @@ export default function QuestionDisplay({
               <CheckCircle className="h-5 w-5 text-blue-500" />
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-h-80 overflow-y-auto">
             <p className="text-sm whitespace-pre-wrap text-gray-600">
               {answerB}
             </p>

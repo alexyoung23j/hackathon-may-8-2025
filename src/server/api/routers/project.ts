@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { generateProjectExport } from "~/server/services/export";
 
 // Type-safe keys for column map
 type ColumnKey = "questionid" | "questiontext" | "answera" | "answerb";
@@ -231,6 +232,165 @@ export const projectRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "CSV upload failed with unknown error",
+        });
+      }
+    }),
+
+  exportProjectData: publicProcedure
+    .input(z.object({ projectId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { projectId } = input;
+
+        // Verify the project exists
+        const project = await ctx.db.project.findUnique({
+          where: { id: projectId },
+        });
+
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        // Generate the CSV data
+        const csvData = await generateProjectExport(projectId);
+
+        return {
+          success: true,
+          csvData,
+          filename: `${project.name.replace(/\s+/g, "_")}_export_${new Date().toISOString().split("T")[0]}.csv`,
+        };
+      } catch (error) {
+        console.error("Export error:", error);
+
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to export project data",
+        });
+      }
+    }),
+
+  getProjectStats: publicProcedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { projectId } = input;
+
+      try {
+        // Get the project to verify it exists
+        const project = await ctx.db.project.findUnique({
+          where: { id: projectId },
+        });
+
+        if (!project) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found",
+          });
+        }
+
+        // Get total interview links created
+        const totalLinksCount = await ctx.db.interviewLink.count({
+          where: { projectId },
+        });
+
+        // Get interview session statistics
+        const interviewSessions = await ctx.db.interviewSession.findMany({
+          where: {
+            interviewLink: {
+              projectId,
+            },
+          },
+          include: {
+            analysisArtifacts: true,
+          },
+        });
+
+        // Calculate various metrics
+        const totalSessionsCount = interviewSessions.length;
+        const completedSessionsCount = interviewSessions.filter(
+          (session) =>
+            session.status === "COMPLETED" || session.completedAt !== null,
+        ).length;
+        const inProgressSessionsCount = interviewSessions.filter(
+          (session) =>
+            session.status === "in-progress" && session.completedAt === null,
+        ).length;
+        const processedSessionsCount = interviewSessions.filter(
+          (session) => session.processed,
+        ).length;
+
+        // Calculate average severity score across all analyzed questions
+        const allArtifacts = interviewSessions.flatMap(
+          (session) => session.analysisArtifacts,
+        );
+        const artifactsWithScore = allArtifacts.filter(
+          (artifact) => artifact.severityScore !== null,
+        );
+        const averageSeverityScore =
+          artifactsWithScore.length > 0
+            ? artifactsWithScore.reduce(
+                (sum, artifact) => sum + (artifact.severityScore ?? 0),
+                0,
+              ) / artifactsWithScore.length
+            : 0;
+
+        // Get total questions evaluated
+        const totalQuestionsEvaluated = allArtifacts.length;
+
+        // Get distinct question IDs that have been evaluated
+        const distinctQuestionIds = new Set(
+          allArtifacts.map((a) => a.questionPairId),
+        );
+        const uniqueQuestionsEvaluated = distinctQuestionIds.size;
+
+        // Find top performing model (Answer A or B)
+        const winnerDistribution = {
+          A: allArtifacts.filter((a) => a.winnerFlag === "A").length,
+          B: allArtifacts.filter((a) => a.winnerFlag === "B").length,
+          tie: allArtifacts.filter(
+            (a) => a.winnerFlag === null || a.winnerFlag === "tie",
+          ).length,
+        };
+
+        return {
+          totalLinksCount,
+          totalSessionsCount,
+          completedSessionsCount,
+          inProgressSessionsCount,
+          processedSessionsCount,
+          totalQuestionsEvaluated,
+          uniqueQuestionsEvaluated,
+          averageSeverityScore,
+          winnerDistribution,
+          // Add completion rate
+          completionRate:
+            totalSessionsCount > 0
+              ? (completedSessionsCount / totalSessionsCount) * 100
+              : 0,
+          // Last session completed
+          lastSessionDate:
+            interviewSessions.length > 0
+              ? interviewSessions.sort(
+                  (a, b) =>
+                    (b.completedAt?.getTime() ?? 0) -
+                    (a.completedAt?.getTime() ?? 0),
+                )[0]?.completedAt
+              : null,
+        };
+      } catch (error) {
+        console.error("Error fetching project stats:", error);
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve project statistics",
         });
       }
     }),

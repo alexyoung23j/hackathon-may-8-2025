@@ -2,6 +2,7 @@ import { postRouter } from "~/server/api/routers/post";
 import { projectRouter } from "~/server/api/routers/project";
 import { interviewLinkRouter } from "~/server/api/routers/interviewLink";
 import { interviewRouter } from "~/server/api/routers/interview";
+import { sessionRouter } from "~/server/api/routers/session";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -14,6 +15,8 @@ export const appRouter = createTRPCRouter({
   project: projectRouter,
   interviewLink: interviewLinkRouter,
   interview: interviewRouter,
+  session: sessionRouter,
+  interviewSession: sessionRouter,
 });
 
 // export type definition of API

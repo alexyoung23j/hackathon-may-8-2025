@@ -8,6 +8,41 @@ import { Mic, MicOff, Send, MessageSquare, X, Volume2 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Avatar } from "~/components/ui/avatar";
 import { api } from "~/trpc/react";
+import { useConversation } from "@11labs/react";
+import { BeatLoader, ScaleLoader } from "react-spinners";
+
+// Define types for ElevenLabs conversation
+interface ElevenLabsMessage {
+  message: string;
+  source?: string;
+}
+
+interface ElevenLabsMode {
+  mode: string;
+}
+
+// Define interface for ElevenLabs conversation object
+interface ElevenLabsConversation {
+  status?: string;
+  startSession: (options: {
+    agentId: string;
+    dynamicVariables?: Record<string, string>;
+  }) => Promise<string>;
+  endSession: () => Promise<void>;
+}
+
+// Define interface for ElevenLabs error context
+interface ElevenLabsErrorContext {
+  code?: string;
+  details?: string;
+}
+
+// Declare global window interface to include our ENV object
+declare global {
+  interface Window {
+    ELEVENLABS_AGENT_ID?: string;
+  }
+}
 
 type VoiceChatInterfaceProps = {
   question: string;
@@ -19,6 +54,7 @@ type VoiceChatInterfaceProps = {
   showTypeButton?: boolean;
   showMessages?: boolean;
   setShowMessages?: Dispatch<SetStateAction<boolean>>;
+  onInterviewEnd?: () => void;
 };
 
 type Message = {
@@ -36,18 +72,13 @@ export default function VoiceChatInterface({
   showTypeButton = true,
   showMessages: externalShowMessages,
   setShowMessages: externalSetShowMessages,
+  onInterviewEnd,
 }: VoiceChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "system",
-      content:
-        "Welcome! I'm your AI interviewer. I'll be asking you questions about these answers to understand your preferences and reasoning. What makes one answer better than the other in your expert opinion?",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [showTextInput, setShowTextInput] = useState(false);
+  const [isAgentEnded, setIsAgentEnded] = useState(false);
   const [internalShowMessages, setInternalShowMessages] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -56,30 +87,56 @@ export default function VoiceChatInterface({
   const showMessages = externalShowMessages ?? internalShowMessages;
   const setShowMessages = externalSetShowMessages ?? setInternalShowMessages;
 
-  // Define mutation for sending messages to AI
-  const sendMessageMutation = api.interview.sendMessage.useMutation({
-    onMutate: () => {
-      setIsSending(true);
-    },
-    onSuccess: (data) => {
-      // Add AI response to messages
-      setMessages((prev) => [
-        ...prev,
-        { role: "system", content: data.response },
-      ]);
-      addToTranscript(`AI: ${data.response}`);
-      setIsSending(false);
+  // ElevenLabs conversation integration
+  const elevenlabsConversation = useConversation({
+    onConnect: () => console.log("Connected to ElevenLabs"),
+    onDisconnect: () => {
+      console.log("Disconnected from ElevenLabs");
+      setIsRecording(false);
+      setIsAgentEnded(true);
 
-      // Simulate AI speaking
-      setIsAISpeaking(true);
-      setTimeout(() => {
-        setIsAISpeaking(false);
-      }, data.response.length * 80); // Simulate speech timing based on message length
+      // Call the onInterviewEnd callback when the agent ends the interview
+      if (onInterviewEnd) {
+        // Give a short delay to allow any final messages to be processed
+        setTimeout(() => {
+          onInterviewEnd();
+        }, 1000);
+      }
     },
-    onError: () => {
-      setIsSending(false);
+    onMessage: (messageObj: ElevenLabsMessage) => {
+      if (messageObj && typeof messageObj.message === "string") {
+        // Add message to the UI based on source
+        const message = messageObj.message;
+        const isUser = messageObj.source === "user";
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: isUser ? "user" : "system",
+            content: message,
+          },
+        ]);
+
+        // Add to transcript with proper prefix
+        addToTranscript(`${isUser ? "Human Expert" : "AI"}: ${message}`);
+
+        // Only simulate AI speaking for agent messages
+        if (!isUser) {
+          setIsAISpeaking(true);
+          setTimeout(() => {
+            setIsAISpeaking(false);
+          }, message.length * 80);
+        }
+      }
     },
-  });
+    onError: (message: string, context?: ElevenLabsErrorContext) =>
+      console.error("ElevenLabs Error:", message, context),
+    onModeChange: (modeObj: ElevenLabsMode) => {
+      if (modeObj && typeof modeObj.mode === "string") {
+        setIsAISpeaking(modeObj.mode === "speaking");
+      }
+    },
+  }) as unknown as ElevenLabsConversation;
 
   // Scroll to bottom of chat whenever messages change
   useEffect(() => {
@@ -89,62 +146,66 @@ export default function VoiceChatInterface({
     }
   }, [messages, showMessages]);
 
-  // Handle submitting a message
-  const handleSendMessage = () => {
-    if (!inputValue.trim() || isSending) return;
-
-    // Add user message to chat
-    const userMessage = { role: "user" as const, content: inputValue };
-    setMessages((prev) => [...prev, userMessage]);
-    addToTranscript(`User: ${inputValue}`);
-
-    // Clear input
-    setInputValue("");
-    setShowTextInput(false);
-
-    // Send message to AI
-    sendMessageMutation.mutate({
-      question,
-      answerA,
-      answerB,
-      selectedAnswer,
-      userMessage: inputValue,
-      previousMessages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    });
-  };
-
-  // Handle voice recording (mock implementation)
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
+  // Handle voice recording with ElevenLabs integration
+  const toggleRecording = async () => {
+    // Check if the conversation methods exist
+    const hasStartSession =
+      typeof elevenlabsConversation?.startSession === "function";
+    const hasEndSession =
+      typeof elevenlabsConversation?.endSession === "function";
 
     if (isRecording) {
-      // Simulate end of recording with a mock message
-      const mockMessage =
-        "This is a simulated voice recording message. In a real implementation, this would be transcribed from audio.";
+      // Stop recording - end the ElevenLabs session
+      setIsRecording(false);
 
-      // Add user message to chat
-      const userMessage = { role: "user" as const, content: mockMessage };
-      setMessages((prev) => [...prev, userMessage]);
-      addToTranscript(`User: ${mockMessage}`);
+      // Check if the conversation is connected and we can end it
+      if (elevenlabsConversation?.status === "connected" && hasEndSession) {
+        try {
+          await elevenlabsConversation.endSession();
+        } catch (error) {
+          console.error("Error ending ElevenLabs conversation:", error);
+        }
+      }
+    } else {
+      // Start recording - start the ElevenLabs session
+      setIsRecording(true);
 
-      // Send message to AI
-      sendMessageMutation.mutate({
-        question,
-        answerA,
-        answerB,
-        selectedAnswer,
-        userMessage: mockMessage,
-        previousMessages: messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      });
+      try {
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // Get the agent ID from window object
+        const agentId =
+          typeof window !== "undefined"
+            ? (window.ELEVENLABS_AGENT_ID ?? "")
+            : "";
+
+        if (!agentId) {
+          console.error("ElevenLabs Agent ID not found");
+          setIsRecording(false);
+          return;
+        }
+
+        // Start the conversation with dynamic variables if the method exists
+        if (hasStartSession) {
+          await elevenlabsConversation.startSession({
+            agentId,
+            dynamicVariables: {
+              question: question,
+              answer_a: answerA,
+              answer_b: answerB,
+              selected_answer: selectedAnswer ?? "",
+            },
+          });
+        } else {
+          console.error("startSession method not available");
+          setIsRecording(false);
+        }
+      } catch (error) {
+        console.error("Failed to start ElevenLabs conversation:", error);
+        setIsRecording(false);
+      }
     }
-
-    // In a real implementation, you would integrate with browser's speech recognition API
   };
 
   // Get the last message safely if it exists
@@ -153,11 +214,11 @@ export default function VoiceChatInterface({
 
   return (
     <div className="flex h-full flex-col justify-between">
-      {/* Main content area */}
-      <div className="mb-auto">
+      {/* Main content area with vertical centering */}
+      <div className="flex flex-1 flex-col items-center justify-center">
         {/* Full chat messages - conditionally displayed */}
         {showMessages && (
-          <div className="relative mb-4">
+          <div className="relative mb-4 w-full">
             <Button
               variant="ghost"
               size="sm"
@@ -209,121 +270,155 @@ export default function VoiceChatInterface({
           </div>
         )}
 
-        {/* Waveform visualization when AI is speaking */}
+        {/* ScaleLoader visualization when AI is speaking - centered */}
         {!showMessages && (isAISpeaking || isSending) && (
-          <div className="mb-8 flex h-20 items-center justify-center rounded-lg bg-gray-50 p-4">
-            <div className="flex items-center">
-              <Volume2 className="mr-3 h-6 w-6 text-blue-500" />
-              <div className="flex items-end space-x-1">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-blue-500"
-                    style={{
-                      height: `${12 + Math.sin(i * 0.8) * 16}px`,
-                      width: "4px",
-                      borderRadius: "2px",
-                      animation: "pulse 1s ease-in-out infinite",
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  ></div>
-                ))}
-              </div>
-              <p className="ml-3 text-sm text-gray-500">
+          <div className="flex items-center justify-center text-center">
+            <div className="flex flex-col items-center">
+              <ScaleLoader
+                color="#3b82f6"
+                height={35}
+                width={4}
+                radius={2}
+                margin={2}
+              />
+              <p className="mt-3 text-sm text-gray-500">
                 {isSending ? "Processing..." : "AI is speaking..."}
               </p>
             </div>
           </div>
         )}
 
-        {/* Latest message preview when not showing all messages and not speaking */}
-        {!showMessages && !isAISpeaking && !isSending && lastMessage && (
-          <div className="mb-8">
-            <p className="mb-1 text-base font-medium text-gray-700">
-              AI Interviewer says:
-            </p>
-            <p className="text-lg leading-relaxed text-gray-900">
-              {lastMessage.content}
-            </p>
+        {/* Latest message preview when not showing all messages and not speaking - centered */}
+        {!showMessages &&
+          !isAISpeaking &&
+          !isSending &&
+          messages.length > 0 && (
+            <div className="max-w-lg text-center">
+              <p className="text-lg leading-relaxed text-gray-900">
+                {messages[messages.length - 1]?.content ?? ""}
+              </p>
+            </div>
+          )}
+
+        {/* Prompt text when no messages yet and not recording - centered */}
+        {!showMessages &&
+          !isAISpeaking &&
+          !isSending &&
+          messages.length === 0 &&
+          !isRecording && (
+            <div className="mx-6 flex flex-col items-center justify-center">
+              <p className="text-center text-gray-500">
+                Share your feedback with our analysis agent. Wait a few seconds
+                after starting for the conversation to begin.
+              </p>
+              <p className="mt-3 text-center text-gray-500">
+                You can end the conversation at any time by tapping the button.
+              </p>
+            </div>
+          )}
+
+        {/* Temporary testing button - only shown in development */}
+        {/* {process.env.NODE_ENV !== "production" && (
+          <div className="mt-4 rounded border border-dashed border-red-300 p-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs text-red-500 hover:text-red-700"
+              onClick={() => {
+                // Add the hardcoded transcript messages
+                const transcript = [
+                  {
+                    role: "system" as const,
+                    content:
+                      "Can you tell me more about why you chose Answer A?",
+                  },
+                  {
+                    role: "user" as const,
+                    content:
+                      "Yeah, so if we choose CARV, the dilol, we're much more likely to get a good result for this kind of patient compared to bisoprolol.",
+                  },
+                  {
+                    role: "system" as const,
+                    content:
+                      "What specific aspects of carvedilol's performance or characteristics make it more suitable for this patient type in your view?",
+                  },
+                  {
+                    role: "user" as const,
+                    content:
+                      "I would say that it's just much more effective as a first-line therapy because bisoprolol has too many side effects or something.",
+                  },
+                  {
+                    role: "system" as const,
+                    content:
+                      "Could you elaborate on which side effects of bisoprolol you find particularly concerning, and how they might impact the treatment of heart failure with reduced ejection fraction?",
+                  },
+                  {
+                    role: "user" as const,
+                    content:
+                      "I mean, it can paralyze you in some rare cases, so it just feels like a risky thing to go for.",
+                  },
+                  {
+                    role: "system" as const,
+                    content: "Is there anything else you need assistance with?",
+                  },
+                  {
+                    role: "user" as const,
+                    content: "Nope. That's it.",
+                  },
+                  {
+                    role: "system" as const,
+                    content:
+                      "Ending the call as the user has no further questions.",
+                  },
+                ];
+
+                // Set messages and add to transcript
+                setMessages(transcript);
+                transcript.forEach((msg) => {
+                  addToTranscript(
+                    `${msg.role === "user" ? "Human Expert" : "AI"}: ${msg.content}`,
+                  );
+                });
+
+                // Simulate the interview ending
+                setIsRecording(false);
+                setIsAgentEnded(true);
+
+                // Call the onInterviewEnd callback
+                if (onInterviewEnd) {
+                  onInterviewEnd();
+                }
+              }}
+            >
+              [TEST ONLY] Simulate Interview End
+            </Button>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Bottom controls - always at the bottom */}
       <div className="mt-auto">
-        {/* Voice recording button (primary interaction) */}
-        <div className="mb-4 flex flex-col items-center">
-          <Button
-            variant={isRecording ? "destructive" : "default"}
-            size="lg"
-            className={cn(
-              "h-16 w-16 rounded-full",
-              isRecording && "animate-pulse",
-            )}
-            onClick={toggleRecording}
-          >
-            {isRecording ? (
-              <MicOff className="h-8 w-8" />
-            ) : (
-              <Mic className="h-8 w-8" />
-            )}
-          </Button>
-          <p className="mt-2 text-sm text-gray-500">
-            {isRecording ? "Tap to stop recording" : "Tap to start recording"}
-          </p>
-        </div>
-
-        {/* Input area - conditionally displayed */}
-        {showTextInput ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSendMessage();
-              }}
-              disabled={isSending}
-              autoFocus
-            />
+        {/* Voice recording button (primary interaction) - hide when agent has ended the conversation */}
+        {!isAgentEnded && (
+          <div className="mb-4 flex flex-col items-center">
             <Button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isSending}
+              variant="default"
+              size="lg"
+              className="h-16 w-16 rounded-full"
+              onClick={toggleRecording}
             >
-              <Send className="h-5 w-5" />
+              {isRecording ? (
+                <BeatLoader color="#ffffff" size={8} />
+              ) : (
+                <Mic className="h-8 w-8" />
+              )}
             </Button>
+            <p className="mt-2 text-sm text-gray-500">
+              {isRecording ? "Tap to stop recording" : "Tap to start feedback"}
+            </p>
           </div>
-        ) : // Show either a button or small text based on showTypeButton prop
-        showTypeButton ? (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowTextInput(true)}
-          >
-            Or type your response
-          </Button>
-        ) : (
-          <p
-            className="cursor-pointer text-center text-xs text-gray-500 hover:text-gray-700"
-            onClick={() => setShowTextInput(true)}
-          >
-            Or type your response
-          </p>
         )}
       </div>
-
-      <style jsx global>{`
-        @keyframes pulse {
-          0%,
-          100% {
-            transform: scaleY(0.5);
-          }
-          50% {
-            transform: scaleY(1);
-          }
-        }
-      `}</style>
     </div>
   );
 }

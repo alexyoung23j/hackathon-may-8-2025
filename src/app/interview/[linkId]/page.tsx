@@ -41,7 +41,6 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
   // Get questions for this interview
   const questions = await db.questionPair.findMany({
     where: { projectId: interviewLink.projectId },
-    take: interviewLink.rowQuota ?? 10, // Default to 10 if not specified
   });
 
   if (questions.length === 0) {
@@ -55,17 +54,30 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
     );
   }
 
-  return (
-    <div className="container mx-auto py-4">
-      <h1 className="mb-6 text-2xl font-bold">
-        Expert Interview: {interviewLink.project.name}
-      </h1>
+  // Get ElevenLabs agent ID from environment
+  const elevenlabsAgentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ?? "";
 
-      <InterviewSession
-        session={session}
-        questions={questions}
-        projectId={interviewLink.projectId}
+  return (
+    <>
+      <div className="container mx-auto py-4">
+        <h1 className="mb-6 text-2xl font-bold">
+          Expert Interview: {interviewLink.project.name}
+        </h1>
+
+        <InterviewSession
+          session={session}
+          questions={questions}
+          projectId={interviewLink.projectId}
+          interviewName={interviewLink.interviewName}
+        />
+      </div>
+
+      {/* Pass the ElevenLabs agent ID to client components */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.ELEVENLABS_AGENT_ID = "${elevenlabsAgentId}";`,
+        }}
       />
-    </div>
+    </>
   );
 }

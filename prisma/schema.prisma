@@ -65,14 +65,17 @@ model InterviewSession {
     startedAt   DateTime  @default(now())
     completedAt DateTime?
     status      String    @default("in-progress") // in-progress, completed, abandoned
+    processed   Boolean   @default(false) // Whether analysis has been processed
     
     // Relations
     interviewLink     InterviewLink @relation(fields: [interviewLinkId], references: [id], onDelete: Cascade)
     interviewLinkId   String
     analysisArtifacts AnalysisArtifact[]
     stepRecords       StepRecord[]
+    sessionSummary    SessionSummary?
 
     @@index([interviewLinkId])
+    @@index([processed])
 }
 
 // Updated to connect to CSVFile
@@ -91,6 +94,7 @@ model QuestionPair {
     csvFile      CSVFile @relation(fields: [csvFileId], references: [id], onDelete: Cascade)
     csvFileId    String
     stepRecords  StepRecord[]
+    analysisArtifacts AnalysisArtifact[]
 
     @@index([projectId])
     @@index([questionId])
@@ -124,7 +128,7 @@ model StepRecord {
 model AnalysisArtifact {
     id                 String @id @default(uuid())
     winnerFlag         String? // "A", "B", or null
-    severityScore      Int?
+    severityScore      Float? // Changed to Float for 0-1 scale
     rationaleDigest    String? @db.Text
     knowledgeGaps      Json?
     promptSuggestions  Json?
@@ -132,6 +136,24 @@ model AnalysisArtifact {
     // Relations
     session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
     sessionId          String
+    
+    // Link to the question this analysis is for
+    questionPair       QuestionPair @relation(fields: [questionPairId], references: [id])
+    questionPairId     String
+
+    @@index([sessionId])
+    @@index([questionPairId])
+}
+
+// New model for session-level summary
+model SessionSummary {
+    id                 String @id @default(uuid())
+    aggregatedInsights Json?
+    overallFeedback    String? @db.Text
+    
+    // Relations
+    session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    sessionId          String @unique
 
     @@index([sessionId])
 }

@@ -17,26 +17,65 @@ export const interviewRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // First, we need to get the questionPairId using the questionId
-      const questionPair = await ctx.db.questionPair.findFirst({
+      console.log("Submit answer inputs:", {
+        projectId: input.projectId,
+        questionId: input.questionId,
+        sessionId: input.sessionId,
+      });
+
+      // First, verify if the projectId exists
+      const project = await ctx.db.project.findUnique({
+        where: { id: input.projectId },
+        select: { id: true },
+      });
+
+      if (!project) {
+        throw new Error(`Project with ID ${input.projectId} not found`);
+      }
+
+      // Check if we have any question pairs at all in this project
+      const questionCount = await ctx.db.questionPair.count({
+        where: { projectId: input.projectId },
+      });
+
+      console.log(
+        `Found ${questionCount} questions in project ${input.projectId}`,
+      );
+
+      // Find the question using the primary key ID, not the questionId field
+      const questionPair = await ctx.db.questionPair.findUnique({
         where: {
-          projectId: input.projectId,
-          questionId: input.questionId,
+          id: input.questionId,
         },
       });
 
+      // If not found, get some details about the question we're looking for
       if (!questionPair) {
+        // Log some helpful debugging info
+        console.log(
+          `Question lookup failed. Looking for ID: ${input.questionId}`,
+        );
+
+        // For debugging, look at some sample questions from this project
+        const sampleQuestions = await ctx.db.questionPair.findMany({
+          where: { projectId: input.projectId },
+          take: 3,
+          select: { id: true, questionId: true },
+        });
+
+        console.log("Sample questions in this project:", sampleQuestions);
+
         throw new Error(`Question with ID ${input.questionId} not found`);
       }
 
-      // Create the step record with the correct fields according to the schema
+      // Create the step record
       const stepRecord = await ctx.db.stepRecord.create({
         data: {
           projectId: input.projectId,
           sessionId: input.sessionId,
           questionPairId: questionPair.id,
           preferredAnswer: input.preferredAnswer,
-          transcript: input.transcript, // This will be automatically converted to JSON
+          transcript: input.transcript,
         },
       });
 
@@ -104,5 +143,76 @@ export const interviewRouter = createTRPCRouter({
       }
 
       return { response: aiResponse };
+    }),
+
+  // Procedure to mark a session as completed and initiate analysis
+  completeSession: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        projectId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the project exists
+      const project = await ctx.db.project.findUnique({
+        where: { id: input.projectId },
+        select: { id: true },
+      });
+
+      if (!project) {
+        throw new Error(`Project with ID ${input.projectId} not found`);
+      }
+
+      // Update the session status to completed
+      const updatedSession = await ctx.db.interviewSession.update({
+        where: { id: input.sessionId },
+        data: {
+          status: "COMPLETED",
+          completedAt: new Date(),
+        },
+      });
+
+      // Update the interview link status to COMPLETED
+      await ctx.db.interviewLink.updateMany({
+        where: {
+          sessions: {
+            some: {
+              id: input.sessionId,
+            },
+          },
+        },
+        data: {
+          status: "COMPLETED",
+        },
+      });
+
+      // Trigger analysis job by making a non-blocking request to the analysis server
+      try {
+        const analysisServerUrl =
+          process.env.ANALYSIS_SERVER_URL ?? "http://localhost:3001";
+
+        // Fire and forget - we don't need to wait for the response
+        void fetch(`${analysisServerUrl}/analyze/${input.sessionId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).catch((error) => {
+          // Just log the error but don't fail the response to the client
+          console.error("Error triggering analysis server:", error);
+        });
+
+        console.log(`Analysis job triggered for session ${input.sessionId}`);
+      } catch (error) {
+        // Just log the error but don't fail the response to the client
+        console.error("Error triggering analysis:", error);
+      }
+
+      return {
+        success: true,
+        session: updatedSession,
+        message: "Session completed and analysis queued",
+      };
     }),
 });

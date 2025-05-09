@@ -10,7 +10,6 @@ export const interviewLinkRouter = createTRPCRouter({
         name: z.string().min(1),
         interviewName: z.string().min(1),
         expiryDate: z.date().optional(),
-        rowQuota: z.number().int().positive().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -40,7 +39,6 @@ export const interviewLinkRouter = createTRPCRouter({
           interviewName: input.interviewName,
           url,
           expiryDate: input.expiryDate,
-          rowQuota: input.rowQuota ?? 10,
           status: "unused",
           project: {
             connect: {

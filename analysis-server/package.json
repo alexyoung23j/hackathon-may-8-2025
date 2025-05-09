@@ -1,0 +1,27 @@
+{
+  "name": "analysis-server",
+  "version": "1.0.0",
+  "description": "Analysis server for Expert Interview Evaluator",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node index.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.55",
+    "@langchain/openai": "^0.5.10",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "langchain": "^0.3.24",
+    "openai": "^4.12.1",
+    "pg": "^8.11.3",
+    "prompts": "link:@langchain/core/prompts"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/pg": "^8.10.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  }
+}

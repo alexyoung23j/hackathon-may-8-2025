@@ -22,8 +22,8 @@ export function CsvSection({ projectId, activeCsvFile }: CsvSectionProps) {
   // If no CSV file exists or uploader is toggled, show the uploader
   if (!activeCsvFile || showUploader) {
     return (
-      <>
-        <h2 className="text-xl font-semibold">Upload CSV</h2>
+      <div className={!activeCsvFile ? "mx-auto max-w-2xl" : ""}>
+        <h2 className="stext-xl font-semibold">Upload CSV</h2>
         <p className="text-muted-foreground">
           Upload a CSV file with questions and candidate answers to evaluate.
         </p>
@@ -39,14 +39,14 @@ export function CsvSection({ projectId, activeCsvFile }: CsvSectionProps) {
             Cancel
           </Button>
         )}
-      </>
+      </div>
     );
   }
 
   // Otherwise show CSV file summary
   return (
     <>
-      <h2 className="text-xl font-semibold">Uploaded CSV</h2>
+      <h2 className="mb-2 text-xl font-semibold">Uploaded CSV</h2>
       <div className="bg-card overflow-hidden rounded-lg border p-4">
         <div className="flex items-center gap-3">
           <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">

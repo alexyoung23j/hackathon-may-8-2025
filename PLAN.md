@@ -113,92 +113,92 @@ This document outlines the step-by-step implementation plan for the Expert Inter
   - [x] Add text input and recording button for the expert's responses
   - [x] Style with shadcn-ui components (Chat, Button, Input)
 
-- [ ] **Voice Recording & Text Conversion**
+- [x] **Voice Recording & Text Conversion**
 
-  - [ ] Implement browser audio recording API integration
-  - [ ] Add visual feedback during recording
-  - [ ] Create speech-to-text conversion logic (Deepgram API, some research on internet is needed)
+  - [x] Implement ElevenLabs Conversational AI integration
+  - [x] Add visual feedback during voice conversations (waveform visualization)
+  - [x] Handle microphone permissions and audio streaming
+  - [x] Create automatic transcript generation from conversation
 
-- [ ] **Backend for Interview Flow**
+- [x] **Backend for Interview Flow**
 
   - [x] Create tRPC router in `/src/server/api/routers/interview.ts`
-  - [ ] Implement `startSession` procedure
-  - [x] Implement `submitAnswer` procedure
-  - [x] Implement `sendMessage` procedure for conversation
+  - [x] Implement `submitAnswer` procedure with automatic progression
+  - [x] Implement debugging and error handling for question lookup
 
-- [ ] **AI Interviewer Logic**
-  - [ ] Set up prompt templates for the AI interviewer
-  - [ ] Implement API calls to OpenAI (or other LLM provider)
-  - [ ] Create logic to determine when to move to the next question
+- [x] **AI Interviewer Logic**
+  - [x] Implement ElevenLabs agent integration with custom prompting
+  - [x] Configure dynamic variables to pass question context to the agent
+  - [x] Create logic for automatic progression after conversation ends
   - [x] Implement transcript storage for each step
 
 ## 5. Automated Analysis & Artifact Generation
 
-- [ ] **Analysis Trigger Endpoint**
+- [x] **Analysis Trigger Endpoint**
 
-  - [ ] Create an endpoint to manually trigger analysis for a completed session
-  - [ ] Add this endpoint to the tRPC interview router
+  - [x] Create an endpoint to manually trigger analysis for a completed session
+  - [x] Add this endpoint to the tRPC interview router
 
-- [ ] **Analysis Generation Logic**
+- [x] **Analysis Generation Logic**
 
-  - [ ] Create a service in `/src/server/services/analysis.ts`
-  - [ ] Implement transcript aggregation logic to prepare for analysis
-  - [ ] Set up prompt templates for the analysis tasks (winner determination, severity scoring, etc.)
-  - [ ] Implement API calls to OpenAI for analysis generation
+  - [x] Create a service in root that is a separate express server separate from the nextjs server. It should use a simple connector to write SQL to the database, no need for prisma.
+  - [x] Implement transcript aggregation logic to prepare for analysis
+  - [x] Set up prompt templates for the analysis tasks (winner determination, sseverity scoring, etc.)
+  - [x] Implement API calls to OpenAI for analysis generation
 
-- [ ] **Analysis Storage**
-  - [ ] Create functions to parse and validate the LLM's output
-  - [ ] Implement logic to store the analysis artifact in the database
-  - [ ] Add logic to update the session status after analysis is complete
+- [x] **Analysis Storage**
+  - [x] Create functions to parse and validate the LLM's output
+  - [x] Implement logic to store the analysis artifact in the database
+  - [x] Add logic to update the session status after analysis is complete
 
-## 6. Project Dashboard & Insights
+## 6. Project Insights
 
-- [ ] **Dashboard Layout**
+- [x] **Dashboard Layout**
 
-  - [ ] Enhance the project detail page with interview session statistics
-  - [ ] Create summary cards showing key metrics (total interviews, completion rate, etc.)
+  - [x] Enhance the project detail page with interview session statistics
+  - [x] Create summary cards showing key metrics (total interviews, completion rate, etc.)
 
-- [ ] **Interview Sessions Table**
+- [x] **Interview Sessions Table**
 
-  - [ ] Create a component in `/src/app/_components/dashboard/SessionsTable.tsx`
-  - [ ] Implement sorting and filtering capabilities
-  - [ ] Add clickable rows to navigate to session details
+  - [x] Create a component in `/src/app/_components/dashboard/SessionsTable.tsx`
+  - [x] Implement sorting and filtering capabilities
+  - [x] Add clickable rows to navigate to session details
 
-- [ ] **Session Detail View**
+- [x] **Session Detail View**
 
-  - [ ] Create `/src/app/projects/[id]/sessions/[sessionId]/page.tsx`
-  - [ ] Implement UI to display all step records for the session
-  - [ ] Create a component to replay/review the transcript
+  - [x] Create `/src/app/projects/[id]/sessions/[sessionId]/page.tsx`
+  - [x] Implement UI to display all step records for the session
+  - [x] Create a component to replay/review the transcript
 
-- [ ] **Visualization Components**
+- [x] **Visualization Components**
 
-  - [ ] Create charts for severity scores using a charting library
-  - [ ] Implement visualization for knowledge gaps frequency
-  - [ ] Add summary statistics visualization
+  - [x] Create charts for severity scores using a charting library
+  - [x] Implement visualization for knowledge gaps frequency
+  - [x] Add summary statistics visualization
 
-- [ ] **Backend for Dashboard Data**
-  - [ ] Extend the project tRPC router with dashboard data procedures
-  - [ ] Implement aggregation logic for project-level statistics
-  - [ ] Create procedures to fetch detailed session data
+- [x] **Backend for Dashboard Data**
+  - [x] Extend the project tRPC router with dashboard data procedures
+  - [x] Implement aggregation logic for project-level statistics
+  - [x] Create procedures to fetch detailed session data
 
 ## 7. Data Export
 
-- [ ] **Export UI**
+- [x] **Export UI**
 
-  - [ ] Add "Export Project Data" button to the project dashboard
-  - [ ] Create a loading state for export processing
+  - [x] Add "Export Project Data" button to the project dashboard
+  - [x] Create a loading state for export processing
 
-- [ ] **CSV Generation Logic**
+- [x] **CSV Generation Logic**
 
-  - [ ] Create a service in `/src/server/services/export.ts`
-  - [ ] Implement logic to fetch all step records and analysis artifacts for a project
-  - [ ] Create functions to transform database records into CSV format
-  - [ ] Implement response streaming for large exports
+  - [x] Create a service in `/src/server/services/export.ts`
+  - [x] Implement logic to fetch all step records and analysis artifacts for a project
+  - [x] Create functions to transform database records into CSV format
+  - [x] Implement response streaming for large exports
 
-- [ ] **Backend for Export**
-  - [ ] Create an export procedure in the project tRPC router
-  - [ ] Add proper error handling for export failures
-  - [ ] Implement download URL generation for the exported file
+- [x] **Backend for Export**
+  - [x] Create an export procedure in the project tRPC router
+  - [x] Add proper error handling for export failures
+  - [x] Implement download URL generation for the exported file
 
 ---
 
@@ -207,9 +207,9 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 - [x] Foundation & Core Models complete
 - [x] Project Management & CSV Upload complete
 - [x] Interview Link Generation complete
-- [ ] Expert Interview Experience complete
-- [ ] Automated Analysis & Artifact Generation complete
-- [ ] Project Dashboard & Insights complete
-- [ ] Data Export complete
+- [x] Expert Interview Experience complete
+- [x] Automated Analysis & Artifact Generation complete
+- [x] Project Dashboard & Insights complete
+- [x] Data Export complete
 
 This plan aligns with the T3 Stack architecture described in the README.md, utilizing Next.js, TypeScript, Tailwind CSS, tRPC, and Prisma.

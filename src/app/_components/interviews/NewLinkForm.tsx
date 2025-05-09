@@ -42,7 +42,6 @@ const formSchema = z.object({
     message: "Interview name is required",
   }),
   expiryDate: z.date().optional(),
-  rowQuota: z.coerce.number().int().positive().optional(),
 });
 
 export function NewLinkForm({
@@ -71,7 +70,6 @@ export function NewLinkForm({
     defaultValues: {
       name: "",
       interviewName: "",
-      rowQuota: 5,
     },
   });
 
@@ -82,7 +80,6 @@ export function NewLinkForm({
       name: values.name,
       interviewName: values.interviewName,
       expiryDate: values.expiryDate,
-      rowQuota: values.rowQuota,
     });
   }
 
@@ -164,23 +161,6 @@ export function NewLinkForm({
               </Popover>
               <FormDescription>
                 The link will expire after this date
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="rowQuota"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Question Quota (Optional)</FormLabel>
-              <FormControl>
-                <Input type="number" min={1} {...field} />
-              </FormControl>
-              <FormDescription>
-                Maximum number of questions to present in this interview
               </FormDescription>
               <FormMessage />
             </FormItem>

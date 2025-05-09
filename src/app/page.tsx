@@ -12,7 +12,12 @@ export default async function Home() {
     <HydrateClient>
       <main className="container mx-auto px-4 py-10">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Projects</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Projects</h1>
+            <p className="text-muted-foreground mt-1">
+              Create analysis projects and manage expert interview links
+            </p>
+          </div>
           <NewProjectForm />
         </div>
 

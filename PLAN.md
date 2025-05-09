@@ -73,24 +73,24 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 
 ## 3. Interview Link Generation
 
-- [ ] **Interview Link UI**
+- [x] **Interview Link UI**
 
-  - [ ] Add "Generate Interview Link" section to the project detail page
-  - [ ] Create a form component in `/src/app/_components/interviews/NewLinkForm.tsx`
-  - [ ] Implement fields for link name, expiry date, and row quota
-  - [ ] Add form validation using Zod
+  - [x] Add "Generate Interview Link" section to the project detail page
+  - [x] Create a form component in `/src/app/_components/interviews/NewLinkForm.tsx`
+  - [x] Implement fields for link name, expiry date, and row quota
+  - [x] Add form validation using Zod
 
-- [ ] **Generated Links Display**
+- [x] **Generated Links Display**
 
-  - [ ] Create a component to list all generated links for a project in `/src/app/_components/interviews/LinksList.tsx`
-  - [ ] Add functionality to copy links to clipboard
-  - [ ] Display link status (unused, in-progress, completed)
+  - [x] Create a component to list all generated links for a project in `/src/app/_components/interviews/LinksList.tsx`
+  - [x] Add functionality to copy links to clipboard
+  - [x] Display link status (unused, in-progress, completed)
 
-- [ ] **Backend for Link Management**
-  - [ ] Create tRPC router in `/src/server/api/routers/interviewLink.ts`
-  - [ ] Implement `createInterviewLink` procedure with unique URL generation
-  - [ ] Implement `getInterviewLinksByProjectId` procedure
-  - [ ] Implement `getInterviewLinkByUrl` procedure for link validation
+- [x] **Backend for Link Management**
+  - [x] Create tRPC router in `/src/server/api/routers/interviewLink.ts`
+  - [x] Implement `createInterviewLink` procedure with unique URL generation
+  - [x] Implement `getInterviewLinksByProjectId` procedure
+  - [x] Implement `getInterviewLinkByUrl` procedure for link validation
 
 ## 4. Expert Interview Experience
 
@@ -117,7 +117,7 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 
   - [ ] Implement browser audio recording API integration
   - [ ] Add visual feedback during recording
-  - [ ] Create speech-to-text conversion logic (or use browser's built-in capabilities if available)
+  - [ ] Create speech-to-text conversion logic (Deepgram API, some research on internet is needed)
 
 - [ ] **Backend for Interview Flow**
 
@@ -206,7 +206,7 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 
 - [x] Foundation & Core Models complete
 - [x] Project Management & CSV Upload complete
-- [ ] Interview Link Generation complete
+- [x] Interview Link Generation complete
 - [ ] Expert Interview Experience complete
 - [ ] Automated Analysis & Artifact Generation complete
 - [ ] Project Dashboard & Insights complete

@@ -21,23 +21,41 @@ model Project {
     interviewLinks    InterviewLink[]
     questionPairs     QuestionPair[]
     stepRecords       StepRecord[]
+    csvFiles          CSVFile[]
 
     @@index([name])
 }
 
-model InterviewLink {
-    id        String   @id @default(uuid())
-    name      String
-    url       String   @unique
-    expiry    DateTime
-    rowQuota  Int
-    status    String   @default("unused") // unused, in-progress, completed
-    createdAt DateTime @default(now())
+// New model to track CSV file uploads
+model CSVFile {
+    id          String   @id @default(uuid())
+    filename    String
+    uploadedAt  DateTime @default(now())
+    rowCount    Int
+    isActive    Boolean  @default(true)  // The currently active CSV for the project
     
     // Relations
-    project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId String
-    sessions  InterviewSession[]
+    project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId   String
+    questionPairs QuestionPair[]
+
+    @@index([projectId])
+}
+
+model InterviewLink {
+    id            String   @id @default(uuid())
+    name          String
+    interviewName String   // Name of the person taking the interview
+    url           String   @unique
+    expiryDate    DateTime?
+    rowQuota      Int?
+    status        String   @default("unused") // unused, in-progress, completed
+    createdAt     DateTime @default(now())
+    
+    // Relations
+    project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId     String
+    sessions      InterviewSession[]
 
     @@index([projectId])
 }
@@ -57,7 +75,7 @@ model InterviewSession {
     @@index([interviewLinkId])
 }
 
-// New model to store the CSV content (questions and answers)
+// Updated to connect to CSVFile
 model QuestionPair {
     id           String  @id @default(uuid())
     questionId   String  // Original ID from the CSV
@@ -70,11 +88,14 @@ model QuestionPair {
     // Relations
     project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
     projectId    String
+    csvFile      CSVFile @relation(fields: [csvFileId], references: [id], onDelete: Cascade)
+    csvFileId    String
     stepRecords  StepRecord[]
 
     @@index([projectId])
     @@index([questionId])
     @@index([order])
+    @@index([csvFileId])
 }
 
 // Updated to only contain session-specific data

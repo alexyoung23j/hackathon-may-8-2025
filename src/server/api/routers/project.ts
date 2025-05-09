@@ -33,6 +33,22 @@ export const projectRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.db.project.findUnique({
         where: { id: input.id },
+        include: {
+          csvFiles: {
+            where: { isActive: true },
+            orderBy: { uploadedAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+    }),
+
+  getQuestionPairsByCSVFile: publicProcedure
+    .input(z.object({ csvFileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.questionPair.findMany({
+        where: { csvFileId: input.csvFileId },
+        orderBy: { order: "asc" },
       });
     }),
 
@@ -41,10 +57,11 @@ export const projectRouter = createTRPCRouter({
       z.object({
         projectId: z.string(),
         csvContent: z.string(),
+        filename: z.string().optional().default("uploaded.csv"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { projectId, csvContent } = input;
+      const { projectId, csvContent, filename } = input;
 
       // Parse CSV content with a more robust approach that handles quoted fields
       const parseCSV = (csvText: string) => {
@@ -127,15 +144,29 @@ export const projectRouter = createTRPCRouter({
       // Process data rows and create QuestionPair records
       const dataRows = rows.slice(1);
 
-      console.log(projectId, dataRows);
-
       try {
-        // First, delete existing question pairs outside of transaction
+        // Mark any existing CSV files as inactive
+        await ctx.db.cSVFile.updateMany({
+          where: { projectId, isActive: true },
+          data: { isActive: false },
+        });
+
+        // Create a new CSV file record
+        const csvFile = await ctx.db.cSVFile.create({
+          data: {
+            filename,
+            projectId,
+            rowCount: dataRows.length,
+            isActive: true,
+          },
+        });
+
+        // Delete existing question pairs for this project
         await ctx.db.questionPair.deleteMany({
           where: { projectId },
         });
 
-        // Then create new question pairs one by one
+        // Create new question pairs linked to the CSV file
         const questionPairs = [];
 
         for (const [index, row] of dataRows.entries()) {
@@ -165,6 +196,7 @@ export const projectRouter = createTRPCRouter({
           const newPair = await ctx.db.questionPair.create({
             data: {
               projectId,
+              csvFileId: csvFile.id, // Link to the CSV file
               questionId,
               questionText,
               answerA,
@@ -180,8 +212,11 @@ export const projectRouter = createTRPCRouter({
         return {
           success: true,
           recordsCreated: questionPairs.length,
+          csvFile, // Return the CSV file info
         };
       } catch (error) {
+        console.error("CSV upload error:", error);
+
         if (error instanceof TRPCError) {
           throw error;
         }

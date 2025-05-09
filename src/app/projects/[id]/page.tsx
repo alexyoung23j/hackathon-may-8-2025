@@ -1,6 +1,8 @@
+// This is a server component
 import { notFound } from "next/navigation";
 import { api, HydrateClient } from "~/trpc/server";
-import CsvUploader from "~/app/_components/projects/CsvUploader";
+import { CsvSection } from "./_components/CsvSection";
+import { InterviewLinkSection } from "./_components/InterviewLinkSection";
 
 interface ProjectPageProps {
   params: {
@@ -17,6 +19,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
+  // Check if project has an active CSV file
+  const activeCsvFile = project.csvFiles?.[0];
+  const hasQuestionPairs = !!activeCsvFile && activeCsvFile.rowCount > 0;
+
   return (
     <HydrateClient>
       <main className="container mx-auto px-4 py-10">
@@ -29,12 +35,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Upload CSV</h2>
-            <p className="text-muted-foreground">
-              Upload a CSV file with questions and candidate answers to
-              evaluate.
-            </p>
-            <CsvUploader projectId={id} />
+            <CsvSection projectId={id} activeCsvFile={activeCsvFile} />
           </div>
 
           <div className="space-y-4">
@@ -42,7 +43,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <p className="text-muted-foreground">
               Create and manage links for expert interviews.
             </p>
-            {/* Interview link management will be added in Step 3 */}
+            <InterviewLinkSection
+              projectId={id}
+              hasQuestionPairs={hasQuestionPairs}
+            />
           </div>
         </div>
       </main>

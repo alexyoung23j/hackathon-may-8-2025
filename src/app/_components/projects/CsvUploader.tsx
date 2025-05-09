@@ -67,6 +67,7 @@ export default function CsvUploader({ projectId }: CsvUploaderProps) {
       uploadCsv.mutate({
         projectId,
         csvContent,
+        filename: file.name,
       });
     };
     reader.readAsText(file);

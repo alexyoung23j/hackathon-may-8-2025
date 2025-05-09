@@ -35,41 +35,41 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 
 ## 2. Project Management & CSV Upload
 
-- [ ] **Project Listing UI**
+- [x] **Project Listing UI**
 
-  - [ ] Create a `/src/app/page.tsx` homepage listing all projects
-  - [ ] Create a Project card component in `/src/app/_components/projects/ProjectCard.tsx`
-  - [ ] Implement UI for "Create New Project" button
+  - [x] Create a `/src/app/page.tsx` homepage listing all projects
+  - [x] Create a Project card component in `/src/app/_components/projects/ProjectCard.tsx`
+  - [x] Implement UI for "Create New Project" button
 
-- [ ] **Create Project Modal/Form**
+- [x] **Create Project Modal/Form**
 
-  - [ ] Create a form component in `/src/app/_components/projects/NewProjectForm.tsx`
-  - [ ] Add form validation using Zod schema
-  - [ ] Style with shadcn-ui components (Dialog, Form, Button)
+  - [x] Create a form component in `/src/app/_components/projects/NewProjectForm.tsx`
+  - [x] Add form validation using Zod schema
+  - [x] Style with shadcn-ui components (Dialog, Form, Button)
 
-- [ ] **Project Detail Page**
+- [x] **Project Detail Page**
 
-  - [ ] Create `/src/app/projects/[id]/page.tsx` for individual project view
-  - [ ] Display project details (name, creation date, status)
+  - [x] Create `/src/app/projects/[id]/page.tsx` for individual project view
+  - [x] Display project details (name, creation date, status)
 
-- [ ] **CSV Upload Functionality**
+- [x] **CSV Upload Functionality**
 
-  - [ ] Create a CSV upload component in `/src/app/_components/projects/CsvUploader.tsx`
-  - [ ] Implement drag-and-drop or file selection UI using shadcn-ui
-  - [ ] Add visual feedback for upload process (progress, success, error states)
+  - [x] Create a CSV upload component in `/src/app/_components/projects/CsvUploader.tsx`
+  - [x] Implement drag-and-drop or file selection UI using shadcn-ui
+  - [x] Add visual feedback for upload process (progress, success, error states)
 
-- [ ] **Backend for Project & CSV Management**
+- [x] **Backend for Project & CSV Management**
 
-  - [ ] Create tRPC router in `/src/server/api/routers/project.ts`
-  - [ ] Implement `createProject` procedure
-  - [ ] Implement `getProjects` procedure
-  - [ ] Implement `getProjectById` procedure
+  - [x] Create tRPC router in `/src/server/api/routers/project.ts`
+  - [x] Implement `createProject` procedure
+  - [x] Implement `getProjects` procedure
+  - [x] Implement `getProjectById` procedure
 
-- [ ] **CSV Processing Logic**
-  - [ ] Create tRPC procedure in the project router for CSV upload
-  - [ ] Implement CSV parsing and validation (check for required columns)
-  - [ ] Create bulk insert logic to store CSV rows as `StepRecord` entities
-  - [ ] Implement error handling for malformed CSV files
+- [x] **CSV Processing Logic**
+  - [x] Create tRPC procedure in the project router for CSV upload
+  - [x] Implement CSV parsing and validation (check for required columns)
+  - [x] Create bulk insert logic to store CSV rows as `QuestionPair` entities
+  - [x] Implement error handling for malformed CSV files
 
 ## 3. Interview Link Generation
 
@@ -205,7 +205,7 @@ This document outlines the step-by-step implementation plan for the Expert Inter
 ## Completion Checklist
 
 - [x] Foundation & Core Models complete
-- [ ] Project Management & CSV Upload complete
+- [x] Project Management & CSV Upload complete
 - [ ] Interview Link Generation complete
 - [ ] Expert Interview Experience complete
 - [ ] Automated Analysis & Artifact Generation complete

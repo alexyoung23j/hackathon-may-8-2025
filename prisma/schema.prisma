@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+model Project {
+    id        String   @id @default(uuid())
+    name      String
+    createdAt DateTime @default(now())
+    status    String   @default("active") // active, archived, etc.
+    
+    // Relations
+    interviewLinks    InterviewLink[]
+    questionPairs     QuestionPair[]
+    stepRecords       StepRecord[]
+
+    @@index([name])
+}
+
+model InterviewLink {
+    id        String   @id @default(uuid())
+    name      String
+    url       String   @unique
+    expiry    DateTime
+    rowQuota  Int
+    status    String   @default("unused") // unused, in-progress, completed
+    createdAt DateTime @default(now())
+    
+    // Relations
+    project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId String
+    sessions  InterviewSession[]
+
+    @@index([projectId])
+}
+
+model InterviewSession {
+    id          String    @id @default(uuid())
+    startedAt   DateTime  @default(now())
+    completedAt DateTime?
+    status      String    @default("in-progress") // in-progress, completed, abandoned
+    
+    // Relations
+    interviewLink     InterviewLink @relation(fields: [interviewLinkId], references: [id], onDelete: Cascade)
+    interviewLinkId   String
+    analysisArtifacts AnalysisArtifact[]
+    stepRecords       StepRecord[]
+
+    @@index([interviewLinkId])
+}
+
+// New model to store the CSV content (questions and answers)
+model QuestionPair {
+    id           String  @id @default(uuid())
+    questionId   String  // Original ID from the CSV
+    questionText String
+    answerA      String
+    answerB      String
+    metadata     Json?
+    order        Int     // To preserve the original order from the CSV
+    
+    // Relations
+    project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId    String
+    stepRecords  StepRecord[]
+
+    @@index([projectId])
+    @@index([questionId])
+    @@index([order])
+}
+
+// Updated to only contain session-specific data
+model StepRecord {
+    id             String  @id @default(uuid())
+    preferredAnswer String? // "A", "B", or null if not selected
+    transcript     Json?   // Stores the conversation transcript
+    
+    // Relations
+    project        Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId      String
+    
+    // Link to the question pair from the CSV
+    questionPair   QuestionPair @relation(fields: [questionPairId], references: [id])
+    questionPairId String
+    
+    // Link to the interview session
+    session        InterviewSession @relation(fields: [sessionId], references: [id])
+    sessionId      String
+
+    @@index([projectId])
+    @@index([sessionId])
+    @@index([questionPairId])
+}
+
+model AnalysisArtifact {
+    id                 String @id @default(uuid())
+    winnerFlag         String? // "A", "B", or null
+    severityScore      Int?
+    rationaleDigest    String? @db.Text
+    knowledgeGaps      Json?
+    promptSuggestions  Json?
+    
+    // Relations
+    session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    sessionId          String
+
+    @@index([sessionId])
+}

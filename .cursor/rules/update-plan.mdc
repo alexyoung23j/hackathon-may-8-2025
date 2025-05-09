@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Plan Tracking and Management
+
+Always maintain the [PLAN.md](mdc:PLAN.md) file as the source of truth for the project implementation. Follow these guidelines:
+
+1. After completing any task in the plan, update the corresponding checkbox from `[ ]` to `[x]` to mark it as complete.
+
+2. If implementation decisions change or you discover a better approach than what's in the plan:
+   - Update the plan to reflect the new approach
+   - Add any new tasks that emerged
+   - Remove or mark as obsolete any tasks that are no longer relevant
+   - Add a brief comment below the changed section explaining the rationale for the change
+
+3. Before starting any implementation work, reference the plan to ensure you're working on the next priority task.
+
+4. If you're making substantial changes to the architectural approach, update both the plan and the relevant section in the project overview at the top of the file.
+
+Always keep the plan document current so it accurately reflects both progress made and the evolving implementation strategy.

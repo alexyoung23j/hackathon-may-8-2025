@@ -1,23 +1,8 @@
 # Expert Interview Evaluator
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+The Expert Interview Evaluator is a browser-based platform that transforms raw evaluation data into expert-curated insights for model teams. The system allows users to upload a CSV file containing questions and candidate answers, which are then converted into shareable interview links. Subject-matter experts interact with these links to evaluate and compare model responses through a natural conversation with an AI interviewer. The platform records their preferences and reasoning, then automatically analyzes the conversations to produce structured artifacts including scores, knowledge gaps, and prompt improvement suggestions. These insights are made available through an interactive dashboard and can be exported as CSV files.
 
-## T3 Stack Overview
-
-The T3 Stack is a web development stack created by Theo focusing on simplicity, modularity, and full-stack type safety. It consists of:
-
-- **Next.js** - React framework for production
-- **TypeScript** - Strongly typed programming language that builds on JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **tRPC** - End-to-end typesafe APIs without schemas or code generation
-- **Prisma** - Type-safe ORM for TypeScript and Node.js
-- **NextAuth.js** - Authentication library for Next.js
-
-This stack follows three core axioms:
-
-1. **Solve Problems** - Each technology added solves a specific problem
-2. **Bleed Responsibly** - Use bleeding-edge tech in less risky parts of the stack
-3. **Typesafety Isn't Optional** - Full typesafety between frontend and backend
+-GPT4o
 
 ## Project Structure
 
@@ -43,6 +28,7 @@ This stack follows three core axioms:
 │       ├── react.tsx     # React integration
 │       ├── server.ts     # Server-side tRPC setup
 │       └── query-client.ts # TanStack Query client setup
+├── analysis-server/      # Server for processing interview analysis
 ```
 
 ## Key Technologies

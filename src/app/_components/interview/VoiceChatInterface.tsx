@@ -295,7 +295,8 @@ export default function VoiceChatInterface({
           messages.length > 0 && (
             <div className="max-w-lg text-center">
               <p className="text-lg leading-relaxed text-gray-900">
-                {messages[messages.length - 1]?.content ?? ""}
+                {messages.filter((msg) => msg.role === "system").slice(-1)[0]
+                  ?.content ?? ""}
               </p>
             </div>
           )}

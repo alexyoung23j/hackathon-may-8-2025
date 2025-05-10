@@ -45,7 +45,7 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {/* Interview Stats */}
       <Card>
-        <CardContent className="px-5 py-4">
+        <CardContent className="px-5 py-1">
           <div className="mb-3 flex items-center gap-2">
             <Users className="h-5 w-5 text-blue-500" />
             <span className="text-sm font-medium text-gray-700">
@@ -95,10 +95,9 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
 
       {/* Output Comparison */}
       <Card>
-        <CardContent className="px-5 py-4">
+        <CardContent className="px-5 py-1">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
               <span className="text-sm font-medium text-gray-700">
                 Output Comparison
               </span>
